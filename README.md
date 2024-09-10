@@ -1,4 +1,4 @@
-# Maps for CTF
+# Maps for JMA CTF
 
 Feel free to create PRs for new maps, but please create them properly (include all required files, i.e. `map.mts`, `map.conf` and `screenshot.png`). Check out map_maker's [README.md](https://github.com/MT-CTF/capturetheflag/tree/master/mods/ctf/ctf_map#ctf-map---map-maker) for more documentation.
 
