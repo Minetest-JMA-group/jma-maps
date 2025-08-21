@@ -5,133 +5,12 @@ local tree_def = {
     grow_time_max = 120,
 }
 
-minetest.register_node("ctf_map:sapling2", {
-    description = "Fast apple tree",
-    drawtype = "plantlike",
-    tiles = {"default_sapling.png"},
-    inventory_image = "default_sapling.png",
-    wield_image = "default_sapling.png",
-    paramtype = "light",
-    sunlight_propagates = true,
-    walkable = false,
-    selection_box = {
-        type = "fixed",
-        fixed = {-4/16, -0.5, -4/16, 4/16, 7/16, 4/16}
-    },
-    groups = {
-        snappy = 2, dig_immediate = 3, flammable = 2,
-        attached_node = 1, sapling = 1, not_in_creative_inventory = 1
-    },
-    sounds = default.node_sound_leaves_defaults(),
-    on_construct = function(pos)
-        if not ctf_map.current_map or ctf_map.current_map.name ~= MAP_NAME then return end
-        minetest.get_node_timer(pos):start(
-            math.random(tree_def.grow_time_min, tree_def.grow_time_max)
-        )
-    end,
-    on_timer = function(pos)
-        if not ctf_map.current_map or ctf_map.current_map.name ~= MAP_NAME then return end
-        if minetest.get_node_light(pos) then
-            default.grow_ctf_tree(pos, true)
-        end
-    end,
-    on_place = function(itemstack, placer, pointed_thing)
-        return minetest.item_place_node(itemstack, placer, pointed_thing)
-    end,
-})
-
 local apple_def = {
     respawn_time_min = 30,
     respawn_time_max = 120,
 }
 
-local function spawn_apple(pos)
-    if not ctf_map.current_map or ctf_map.current_map.name ~= MAP_NAME then return end
-    minetest.set_node(pos, {name = "default:apple"})
-end
-
-local function has_tree_neighbor(pos)
-    local dirs = {
-        {x=1, y=0, z=0}, {x=-1, y=0, z=0},
-        {x=0, y=1, z=0}, {x=0, y=-1, z=0},
-        {x=0, y=0, z=1}, {x=0, y=0, z=-1},
-    }
-
-    for _, d in ipairs(dirs) do
-        local p = {x = pos.x + d.x, y = pos.y + d.y, z = pos.z + d.z}
-        local node = minetest.get_node_or_nil(p)
-        if node and (node.name == "ctf_map:leaves2" or node.name == "default:tree") then
-            return true
-        end
-    end
-    return false
-end
-
-minetest.register_node("ctf_map:apple_generator", {
-    description = "Apple Generator (invisible)",
-    drawtype = "airlike",
-    paramtype = "light",
-    sunlight_propagates = true,
-    walkable = false,
-    pointable = false,
-    diggable = false,
-    buildable_to = true,
-    drop = "",
-    groups = {not_in_creative_inventory = 1},
-    on_timer = function(pos, elapsed)
-        if not has_tree_neighbor(pos) then
-            minetest.remove_node(pos)
-            return false
-        end
-
-        spawn_apple(pos)
-        return false
-    end,
-})
-
-
-local old_after_dig = minetest.registered_nodes["default:apple"].after_dig_node
-minetest.override_item("default:apple", {
-    after_dig_node = function(pos, oldnode, oldmeta, digger)
-        if old_after_dig then
-            old_after_dig(pos, oldnode, oldmeta, digger)
-        end
-        if not ctf_map.current_map or ctf_map.current_map.name ~= MAP_NAME then return end
-
-        local current_mode = ctf_modebase.current_mode
-        if current_mode ~= "classes" and current_mode ~= "nade_fight" then
-            minetest.set_node(pos, {name = "ctf_map:apple_generator"})
-            local delay = math.random(apple_def.respawn_time_min, apple_def.respawn_time_max)
-            minetest.get_node_timer(pos):start(delay)
-        end
-    end,
-})
-
-minetest.register_node("ctf_map:leaves2", {
-    description = "CTF Apple Tree Leaves",
-    drawtype = "allfaces_optional",
-    waving = 1,
-    tiles = {"default_leaves.png"},
-    special_tiles = {"default_leaves_simple.png"},
-    paramtype = "light",
-    is_ground_content = false,
-    groups = {snappy = 3, leafdecay = 3, flammable = 2, leaves = 1, not_in_creative_inventory = 1},
-    drop = {
-        max_items = 1,
-        items = {
-            {
-                items = {"ctf_map:sapling2"},
-                rarity = 15,
-            },
-        }
-    },
-    sounds = default.node_sound_leaves_defaults(),
-    after_place_node = after_place_leaves,
-})
-
-function default.grow_ctf_tree(pos, is_apple_tree)
-    if not ctf_map.current_map or ctf_map.current_map.name ~= MAP_NAME then return end
-
+local function grow_ctf_tree(pos, is_apple_tree)
     local x, y, z = pos.x, pos.y, pos.z
     local height = math.random(4, 7)
 
@@ -170,11 +49,10 @@ function default.grow_ctf_tree(pos, is_apple_tree)
     end
 
     local top_y = y + height
-    local cross_pattern = {
+    for _, off in ipairs({
         {x = 0, z = 0}, {x = 1, z = 0}, {x = -1, z = 0},
         {x = 0, z = 1}, {x = 0, z = -1},
-    }
-    for _, off in ipairs(cross_pattern) do
+    }) do
         local vi = a:index(x + off.x, top_y, z + off.z)
         if data[vi] == c_air or data[vi] == c_ignore then
             data[vi] = c_leaves
@@ -203,14 +81,122 @@ function default.grow_ctf_tree(pos, is_apple_tree)
                 local node = minetest.get_node_or_nil(generator_pos)
                 if node and (node.name == "air" or node.name == "ctf_map:leaves2") then
                     minetest.set_node(generator_pos, {name = "ctf_map:apple_generator"})
-                    spawn_apple(generator_pos)
+                    minetest.set_node(generator_pos, {name = "default:apple"})
                 end
             end
         end
     end
 end
 
--- Message pour vérifier que le mod est chargé
+minetest.register_node("ctf_map:sapling2", {
+    description = "Fast apple tree",
+    drawtype = "plantlike",
+    tiles = {"default_sapling.png"},
+    inventory_image = "default_sapling.png",
+    wield_image = "default_sapling.png",
+    paramtype = "light",
+    sunlight_propagates = true,
+    walkable = false,
+    selection_box = {
+        type = "fixed",
+        fixed = {-4/16, -0.5, -4/16, 4/16, 7/16, 4/16}
+    },
+    groups = {
+        snappy = 2, dig_immediate = 3, flammable = 2,
+        attached_node = 1, sapling = 1, not_in_creative_inventory = 1
+    },
+    sounds = default.node_sound_leaves_defaults(),
+    on_construct = function(pos)
+        minetest.get_node_timer(pos):start(
+            math.random(tree_def.grow_time_min, tree_def.grow_time_max)
+        )
+    end,
+    on_timer = function(pos)
+        if minetest.get_node_light(pos) then
+            grow_ctf_tree(pos, true)
+        end
+    end,
+})
+
+minetest.register_node("ctf_map:leaves2", {
+    description = "CTF Apple Tree Leaves",
+    drawtype = "allfaces_optional",
+    waving = 1,
+    tiles = {"default_leaves.png"},
+    special_tiles = {"default_leaves_simple.png"},
+    paramtype = "light",
+    is_ground_content = false,
+    groups = {snappy = 3, leafdecay = 3, flammable = 2, leaves = 1, not_in_creative_inventory = 1},
+    drop = {
+        max_items = 1,
+        items = {
+            {items = {"ctf_map:sapling2"}, rarity = 15},
+        }
+    },
+    sounds = default.node_sound_leaves_defaults(),
+})
+
+minetest.register_node("ctf_map:apple_generator", {
+    description = "Apple Generator (invisible)",
+    drawtype = "airlike",
+    paramtype = "light",
+    sunlight_propagates = true,
+    walkable = false,
+    pointable = false,
+    diggable = false,
+    buildable_to = true,
+    drop = "",
+    groups = {not_in_creative_inventory = 1},
+    on_timer = function(pos, elapsed)
+        minetest.set_node(pos, {name = "default:apple"})
+        return false
+    end,
+})
+
+local old_after_dig = minetest.registered_nodes["default:apple"].after_dig_node
+
+local function on_new_match()
+    local map = ctf_map.current_map
+    if not map or map.name ~= MAP_NAME then return end
+
+    minetest.override_item("default:apple", {
+        after_dig_node = function(pos, oldnode, oldmeta, digger)
+            if old_after_dig then
+                old_after_dig(pos, oldnode, oldmeta, digger)
+            end
+
+            local current_mode = ctf_modebase.current_mode
+            if current_mode ~= "classes" and current_mode ~= "nade_fight" then
+                minetest.set_node(pos, {name = "ctf_map:apple_generator"})
+                local delay = math.random(apple_def.respawn_time_min, apple_def.respawn_time_max)
+                minetest.get_node_timer(pos):start(delay)
+            end
+        end,
+    })
+
+    minetest.chat_send_all(minetest.colorize("#00FF00",
+        "[Apple Mod] Activé pour la map: " .. MAP_NAME))
+end
+
+local function on_match_end()
+    minetest.override_item("default:apple", {
+        after_dig_node = old_after_dig
+    })
+end
+
 minetest.register_on_mods_loaded(function()
-    minetest.chat_send_all(minetest.colorize("#00FF00", "[Apple Mod] Chargé pour la map: " .. MAP_NAME))
+    if not ctf_modebase then
+        minetest.log("error", "[ctf_apples] ctf_modebase is not loaded!")
+        return
+    end
+
+    local old_on_new_match = ctf_modebase.on_new_match
+    ctf_modebase.on_new_match = function(...)
+        if old_on_new_match then old_on_new_match(...) end
+    end
+
+    local old_on_match_end = ctf_modebase.on_match_end
+    ctf_modebase.on_match_end = function(...)
+        if old_on_match_end then old_on_match_end(...) end
+    end
 end)
