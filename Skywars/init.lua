@@ -29,14 +29,11 @@ local function get_random_loot()
     local cumulative = 0
 
     for _, entry in ipairs(loot_table) do
-        -- 🔒 Filtrage selon le mode
         if current_mode == "classes" then
-            -- AUCUNE épée
             if entry.type == "weapon" then
                 goto continue
             end
         elseif current_mode == "nade_fight" then
-            -- Seulement steel et mese
             if entry.type == "weapon" and entry.sword_type == "diamond" then
                 goto continue
             end
@@ -95,3 +92,4 @@ minetest.register_abm({
         end
     end,
 })
+
