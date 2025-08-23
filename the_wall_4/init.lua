@@ -156,26 +156,16 @@ minetest.register_node("ctf_map:apple_generator", {
 local old_after_dig = minetest.registered_nodes["default:apple"].after_dig_node
 
 local function on_new_match()
-    local map = ctf_map.current_map
-    if not map or map.name ~= MAP_NAME then return end
-
     minetest.override_item("default:apple", {
         after_dig_node = function(pos, oldnode, oldmeta, digger)
             if old_after_dig then
                 old_after_dig(pos, oldnode, oldmeta, digger)
             end
-
-            local current_mode = ctf_modebase.current_mode
-            if current_mode ~= "classes" and current_mode ~= "nade_fight" then
-                minetest.set_node(pos, {name = "ctf_map:apple_generator"})
-                local delay = math.random(apple_def.respawn_time_min, apple_def.respawn_time_max)
-                minetest.get_node_timer(pos):start(delay)
-            end
+            minetest.set_node(pos, {name = "ctf_map:apple_generator"})
+            local delay = math.random(apple_def.respawn_time_min, apple_def.respawn_time_max)
+            minetest.get_node_timer(pos):start(delay)
         end,
     })
-
-    minetest.chat_send_all(minetest.colorize("#00FF00",
-        "[Apple Mod] Activé pour la map: " .. MAP_NAME))
 end
 
 local function on_match_end()
@@ -184,19 +174,14 @@ local function on_match_end()
     })
 end
 
-minetest.register_on_mods_loaded(function()
-    if not ctf_modebase then
-        minetest.log("error", "[ctf_apples] ctf_modebase is not loaded!")
-        return
+ctf_api.register_on_new_match(function()
+    if ctf_map.current_map and ctf_map.current_map.name == MAP_NAME then
+        on_new_match()
     end
+end)
 
-    local old_on_new_match = ctf_modebase.on_new_match
-    ctf_modebase.on_new_match = function(...)
-        if old_on_new_match then old_on_new_match(...) end
-    end
-
-    local old_on_match_end = ctf_modebase.on_match_end
-    ctf_modebase.on_match_end = function(...)
-        if old_on_match_end then old_on_match_end(...) end
+ctf_api.register_on_match_end(function()
+    if ctf_map.current_map and ctf_map.current_map.name == MAP_NAME then
+        on_match_end()
     end
 end)
