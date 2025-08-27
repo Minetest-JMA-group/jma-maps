@@ -20,7 +20,7 @@ local loot_table = {
     {item = "wind_charge:wind_charge 10", chance = 15},
     {item = "default:cobble 50", chance = 15},
     {item = "ctf_map:spike 10", chance = 5},
-	{item = "ctf_landmine:landmine", chance = 4},
+    {item = "ctf_landmine:landmine 2", chance = 4},
     {item = "default:mese_crystal 2", chance = 9}
 }
 
@@ -29,11 +29,13 @@ local function get_random_loot()
     local cumulative = 0
 
     for _, entry in ipairs(loot_table) do
-        if current_mode == "classes" then
+        local mode = ctf_modebase.current_mode
+
+        if mode == "classes" then
             if entry.type == "weapon" then
                 goto continue
             end
-        elseif current_mode == "nade_fight" then
+        elseif mode == "nade_fight" then
             if entry.type == "weapon" and entry.sword_type == "diamond" then
                 goto continue
             end
@@ -63,7 +65,7 @@ end
 minetest.register_abm({
     label = "Loot Block Spawner",
     nodenames = {"ctf_map:loot_block"},
-    interval = 15,
+    interval = 1,
     chance = 1,
     action = function(pos, node)
         if not player_in_radius(pos, 5) then
@@ -93,3 +95,43 @@ minetest.register_abm({
     end,
 })
 
+local world_bound_pos1, world_bound_pos2 = nil, nil
+local MAP_NAME = "Skywars"
+
+local function clear_loot_items()
+    if not world_bound_pos1 or not world_bound_pos2 then
+        return
+    end
+
+    local loot_blocks = minetest.find_nodes_in_area(world_bound_pos1, world_bound_pos2, {"ctf_map:loot_block"})
+
+    for _, pos in ipairs(loot_blocks) do
+        local objs = minetest.get_objects_inside_radius(
+            {x = pos.x, y = pos.y + 1, z = pos.z}, 1.5
+        )
+        for _, obj in ipairs(objs) do
+            local ent = obj:get_luaentity()
+            if ent and ent.name == "__builtin:item" then
+                obj:remove()
+            end
+        end
+    end
+end
+
+ctf_api.register_on_new_match(function()
+    if ctf_map.current_map and ctf_map.current_map.name == MAP_NAME then
+        minetest.after(0, function()
+            world_bound_pos1 = ctf_map.current_map.pos1
+            world_bound_pos2 = ctf_map.current_map.pos2
+            clear_loot_items()
+        end)
+    end
+end)
+
+ctf_api.register_on_match_end(function()
+    if ctf_map.current_map and ctf_map.current_map.name == MAP_NAME then
+        clear_loot_items()
+        world_bound_pos1 = nil
+        world_bound_pos2 = nil
+    end
+end)
