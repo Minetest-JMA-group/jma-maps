@@ -200,40 +200,13 @@ local merchant_textures = {
     items  = "merchant_items.png",
 }
 
-local function spawn_merchant(pos, type)
-    local skin = merchant_textures[type]
-    if not skin then
-        minetest.log("error", "[ctf_map] No texture defined for merchant type: "..type)
-        return
-    end
-
-    local obj = minetest.add_entity({x=pos.x, y=pos.y+0.5, z=pos.z}, "ctf_map:merchant_"..type)
-    if obj then
-        local lua = obj:get_luaentity()
-        if lua then
-            lua.merchant_type = type
-            lua:set_skin(skin)
-        end
-        table.insert(merchants, obj)
-    end
-end
-
-
-
-local function clear_merchants()
-    for _, obj in ipairs(merchants) do
-        if obj and obj:get_luaentity() then obj:remove() end
-    end
-    merchants = {}
-end
-
-
-
 local function register_merchant(name)
     local display_name = name
     if name == "blocks" then display_name = "Block Vendor"
     elseif name == "swords" then display_name = "Sword & Weapons Vendor"
     elseif name == "items" then display_name = "Item Vendor" end
+
+    local texture = merchant_textures[name] or "character.png"
 
     minetest.register_entity("ctf_map:merchant_"..name, {
         initial_properties = {
@@ -243,7 +216,7 @@ local function register_merchant(name)
             collisionbox = {-0.3,0,-0.3,0.3,1.9,0.3},
             visual = "mesh",
             mesh = "character.b3d",
-            textures = {"character.png"},
+            textures = {texture},
             visual_size = {x=1,y=1},
             nametag = display_name,
             nametag_color = "#FFD700",
@@ -275,6 +248,38 @@ local function register_merchant(name)
         end,
     })
 end
+
+local function spawn_merchant(pos, type)
+    local skin = merchant_textures[type]
+    if not skin then
+        minetest.log("error", "[ctf_map] No texture defined for merchant type: "..type)
+        return
+    end
+
+    local obj = minetest.add_entity({x=pos.x, y=pos.y+0.5, z=pos.z}, "ctf_map:merchant_"..type)
+    if obj then
+        local lua = obj:get_luaentity()
+        if lua then
+            lua.merchant_type = type
+            lua:set_skin(skin)
+        end
+        table.insert(merchants, obj)
+    end
+end
+
+
+
+local function clear_merchants()
+    for _, obj in ipairs(merchants) do
+        if obj and obj:get_luaentity() then obj:remove() end
+    end
+    merchants = {}
+end
+
+
+
+
+
 
 for _, t in ipairs({"blocks","swords","items"}) do
     register_merchant(t)
