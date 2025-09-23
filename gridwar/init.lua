@@ -1,5 +1,5 @@
 local MAP_NAME = "GridWar"
-local DEATH_BARRIER_Y_OFFSET = 9
+local DEATH_BARRIER_Y_OFFSET = 5
 local RESPAWN_Y_OFFSET = 3
 local AIR_LIGHT_LEVEL = 5
 
