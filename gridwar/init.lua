@@ -1,23 +1,8 @@
 local MAP_NAME = "GridWar"
-local DEATH_BARRIER_Y_OFFSET = 9
+local DEATH_BARRIER_Y_OFFSET = 5
 local RESPAWN_Y_OFFSET = 3
-local AIR_LIGHT_LEVEL = 5
 
 local enabled = false
-
-minetest.register_node("ctf_map:glowing_air", {
-    description = "Glowing Air",
-    drawtype = "airlike",
-    paramtype = "light",
-    light_source = AIR_LIGHT_LEVEL,
-    walkable = false,
-    pointable = false,
-    diggable = false,
-    buildable_to = true,
-    air_equivalent = true,
-    drop = "",
-    groups = {not_in_creative_inventory = 1}
-})
 
 
 local world_bound_pos1, world_bound_pos2 = nil, nil
