@@ -92,7 +92,7 @@ function ctf_map.callbacks.caverns.on_place(mapmeta)
 		place_ore_if(pos, NODE_IRON)
 	end
 	vm:set_data(data)
-	vm:oswrite_to_map(false)
+	vm:write_to_map(false)
 	vm:close()
 	core.debug(string.format("caverns placed ores: %d dia, %d mese, %d iron", #diamond_ores, #mese_ores, #iron_ores))
 	for idx, pos in ipairs(diamond_ores) do
