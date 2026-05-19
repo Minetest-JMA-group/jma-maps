@@ -62,10 +62,7 @@ function ctf_map.callbacks.caverns.on_place(mapmeta)
 	--- @param pos Vector
 	--- @return integer
 	local function pos_to_index(pos)
-		return math.abs(pos.z - pos1.z) * n_x * n_y
-			+ math.abs(pos.y - pos1.y) * n_x
-			+ math.abs(pos.x - pos1.x)
-			+ 1
+		return math.abs(pos.z - pos1.z) * n_x * n_y + math.abs(pos.y - pos1.y) * n_x + math.abs(pos.x - pos1.x) + 1
 		-- 229 * 229 * 229
 	end
 	local NODE_IRON = core.get_content_id("default:stone_with_iron")
@@ -95,5 +92,6 @@ function ctf_map.callbacks.caverns.on_place(mapmeta)
 		place_ore_if(pos, NODE_IRON)
 	end
 	vm:set_data(data)
-	vm:write_to_map(false)
+	vm:oswrite_to_map(false)
+	vm:close()
 end
