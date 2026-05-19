@@ -94,4 +94,11 @@ function ctf_map.callbacks.caverns.on_place(mapmeta)
 	vm:set_data(data)
 	vm:oswrite_to_map(false)
 	vm:close()
+	core.debug(string.format("caverns placed ores: %d dia, %d mese, %d iron", #diamond_ores, #mese_ores, #iron_ores))
+	for idx, pos in ipairs(diamond_ores) do
+		core.debug(string.format("diamond ore: %s", core.serialize(pos)))
+		if idx >= 20 then
+			break
+		end
+	end
 end
