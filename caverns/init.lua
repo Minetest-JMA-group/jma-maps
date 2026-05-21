@@ -18,7 +18,7 @@ function ctf_map.callbacks.caverns.on_place(mapmeta)
 	local size_y = math.abs(pos2.y - pos1.y)
 	local size_z = math.abs(pos2.z - pos1.z)
 	local size = size_x * size_y * size_z
-	local to_place = math.floor(size / 50)
+	local to_place = math.floor(size / 20)
 	local vector_right = { x = 1, y = 0, z = 0 }
 	for _ = 1, to_place do
 		local r = math.random()
